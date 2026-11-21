@@ -9,6 +9,7 @@
 // Roughness is controlled with r2_gloss_min
 //=================================================================================================
 #include "pbr_settings.h" //load settings files
+#include "source_lighting.h"
 #define PI 3.14159265359
 //=================================================================================================
 uniform float4 ssfx_lightsetup_1; // Spec intensity
@@ -190,10 +191,15 @@ float Lambert_Source(float nDotL, float rough)
 
 float Lit_Diffuse(float nDotL, float nDotV, float vDotH, float rough)
 {
-#ifdef USE_BURLEY_DIFFUSE
+    float orig_diff = Lambert_Source(nDotL, rough);
+#if defined(USE_SOURCE_LIGHTING) && defined(USE_SOURCE_HALF_LAMBERT)
+    // Source Engine: Half-Lambert (Wrapped Diffuse) для мягкого затекания света на круглых поверхностях
+    float source_diff = Source_HalfLambert(nDotL);
+    return lerp(orig_diff, source_diff, source_lighting_control.x);
+#elif defined(USE_BURLEY_DIFFUSE)
     return Lit_Burley(nDotL, nDotV, vDotH, rough);
 #else
-    return Lambert_Source(nDotL, rough);
+    return orig_diff;
 #endif
 }
 
@@ -227,6 +233,13 @@ float3 Lit_BRDF(float rough, float3 albedo, float3 f0, float3 V, float3 N, float
     // Specular
     float3 specular_term = Lit_Specular(nDotL, nDotH, nDotV, vDotH, f0, rough);
 
+#if defined(USE_SOURCE_LIGHTING) && defined(USE_SOURCE_SPECULAR_WARP)
+    // Source Engine: Specular / Phong Warp ($phongwarptexture)
+    // Деформирует блик, добавляет нелинейное затухание и холодный стальной/перламутровый сдвиг
+    float3 warped_specular = Source_SpecularWarp(specular_term, nDotH, nDotV, rough, Ldynamic_color.rgb);
+    specular_term = lerp(specular_term, warped_specular, source_lighting_control.x);
+#endif
+
     // Horizon falloff
     float horizon = saturate(DotNV * 2.0f);
     specular_term *= horizon * horizon;
@@ -235,6 +248,13 @@ float3 Lit_BRDF(float rough, float3 albedo, float3 f0, float3 V, float3 N, float
     float3 light = saturate(Ldynamic_color.rgb);
     specular_term *= 1.0f - ((light.r + light.g + light.b) / 3.0) * (1.0f - ssfx_lightsetup_1.x);
     specular_term *= lerp(1.0f, Ldynamic_color.rgb, ssfx_lightsetup_1.y);
+
+#if defined(USE_SOURCE_LIGHTING) && defined(USE_SOURCE_RIM_LIGHT)
+    // Source Engine: Rim Lighting ($rimlight)
+    // Контурная подсветка силуэтов для визуального отделения геометрии от темного фона
+    float3 rim_term = Source_RimLight(nDotV, nDotL, rough, Ldynamic_color.rgb) * source_lighting_control.x;
+    diffuse_term += rim_term * albedo;
+#endif
 
     // SSS Update 19 - Smooth Shading ( squared nDotL )
     return (diffuse_term + specular_term) * nDotL * nDotL * PI;
@@ -275,6 +295,12 @@ float3 Amb_BRDF(float rough, float3 albedo, float3 f0, float3 env_d, float3 env_
     float DotNV = dot(N, V);
     // float nDotV = 1e-5 + abs(dot(N, V)); //DICE
     float nDotV = max(1e-5, DotNV);
+
+#if defined(USE_SOURCE_LIGHTING) && defined(USE_SOURCE_AMBIENT_CUBE)
+    // Source Engine: Ambient Cube (6-осевая аппроксимация направленного рассеянного света в тени)
+    float3 cube_ambient = Source_AmbientCube(N, env_d);
+    env_d = lerp(env_d, cube_ambient, source_lighting_control.x);
+#endif
 
     float3 diffuse_term = Amb_Diffuse(f0, rough, nDotV);
     diffuse_term *= env_d * albedo;

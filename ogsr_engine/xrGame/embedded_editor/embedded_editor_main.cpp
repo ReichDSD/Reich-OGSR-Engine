@@ -8,6 +8,7 @@
 
 #include "../../XR_3DA/xr_input.h"
 #include "../../XR_3DA/IGame_Persistent.h"
+#include "../../XR_3DA/XR_IOConsole.h"
 #include "xr_level_controller.h"
 
 #include "embedded_editor_main.h"
@@ -215,6 +216,29 @@ void CImGuiMainWnd::Render()
     ImGui::Text("TPS %.3f ms/frame (%.1f FPS)", 1000.0f / framerate, framerate);
 
     ImGui::PlotHistogram("##FPS", frames.data(), frames.size(), 0, nullptr, 0.0f, 300.0f, ImVec2{ImGui::GetContentRegionAvail().x, 100});
+
+    // Управление шейдерами освещения Source Engine в реальном времени
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Source Engine / Black Mesa Lighting", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        float src_min = 0.0f, src_max = 1.0f;
+        float src_val = Console ? Console->GetFloat("r_source_lighting", src_min, src_max) : 1.0f;
+        if (ImGui::SliderFloat("Source Blend", &src_val, 0.0f, 1.0f, "%.2f"))
+        {
+            string64 cmd;
+            xr_sprintf(cmd, "r_source_lighting %f", src_val);
+            Console->Execute(cmd);
+        }
+        if (ImGui::Button(src_val > 0.5f ? "Switch to Original S.T.A.L.K.E.R." : "Switch to Source Engine"))
+        {
+            float target = (src_val > 0.5f) ? 0.0f : 1.0f;
+            string64 cmd;
+            xr_sprintf(cmd, "r_source_lighting %f", target);
+            Console->Execute(cmd);
+        }
+        ImGui::SameLine();
+        ImGui::Text(src_val > 0.5f ? "[Source Engine Active]" : "[Original S.T.A.L.K.E.R. Active]");
+    }
 
 #ifdef TRACY_ENABLE
     ImGui::Separator();

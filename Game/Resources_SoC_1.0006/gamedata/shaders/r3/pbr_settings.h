@@ -9,6 +9,16 @@
 //=================================================================================================
 #define USE_BURLEY_DIFFUSE // use expensive Disney/Burley diffuse
 #define USE_GGX_SPECULAR // use more expensive GGX specular
+
+//=================================================================================================
+// Source Engine Lighting Pipeline (Source SDK 2013 / Black Mesa)
+//=================================================================================================
+#define USE_SOURCE_LIGHTING         // Главный переключатель освещения Source Engine
+#define USE_SOURCE_HALF_LAMBERT     // Мягкое диффузное освещение Valve Half-Lambert
+#define USE_SOURCE_SPECULAR_WARP    // Спекулярный варпинг ($phongwarptexture)
+#define USE_SOURCE_RIM_LIGHT        // Контурное освещение силуэтов ($rimlight)
+#define USE_SOURCE_AMBIENT_CUBE     // Объемный кубический рассеянный свет (Ambient Cube)
+#define USE_SOURCE_TONEMAP          // HDR тонемаппер Source SDK 2013
 //=================================================================================================
 #define ALBEDO_BOOST 0.1
 #define ALBEDO_AMOUNT 1.00

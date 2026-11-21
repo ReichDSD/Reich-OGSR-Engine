@@ -321,6 +321,9 @@ float ps_r2_no_rain_radius = 0.f;
 
 float ps_r2_gloss_factor = 4.0f;
 
+// Коэффициент смешивания освещения Source Engine (0.0 = оригинал S.T.A.L.K.E.R., 1.0 = Source Engine / Black Mesa)
+float ps_r_source_lighting = 1.0f;
+
 int ps_pnv_mode = 0;
 
 float ps_pnv_noise = 0.15;
@@ -766,6 +769,9 @@ void xrRender_initconsole()
     CMD4(CCC_Float, "r2_gloss_factor", &ps_r2_gloss_factor, .0f, 10.f);
     CMD4(CCC_Float, "r2_gloss_min", &ps_r2_gloss_min, .001f, 1.0f);
     //- Mad Max
+
+    // Source Engine / Black Mesa lighting runtime switch and blend (0.0 = Stalker, 1.0 = Source)
+    CMD4(CCC_Float, "r_source_lighting", &ps_r_source_lighting, 0.0f, 1.0f);
 
     // CMD3(CCC_Mask, "r_taa_jitter_enable", &ps_r2_ls_flags, R2FLAG_DBG_TAA_JITTER_ENABLE);
 

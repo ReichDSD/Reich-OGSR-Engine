@@ -1,11 +1,19 @@
 //=================================================================================================
 // Gamma Correct Tonemapping and Color Grading
 #include "ACES.h"
+#include "source_lighting.h"
 //=================================================================================================
 
 float3 tonemap_sRGB(float3 x, float w)
 {
-#ifdef USE_ACES
+#if defined(USE_SOURCE_LIGHTING) && defined(USE_SOURCE_TONEMAP)
+    // Source Engine (Source SDK 2013 / Black Mesa):
+    // HDR компрессия светов с мягким плечом и кинематографичным контрастом средних тонов
+    float3 linear_x = SRGBToLinear(x);
+    float3 source_x = LinearTosRGB(Source_Tonemap(linear_x, w));
+    float3 orig_x = ACES(x);
+    x = lerp(orig_x, source_x, source_lighting_control.x);
+#elif defined(USE_ACES)
     // use ACES workflow for color grading and tonemapping
     x = ACES(x);
 #else

@@ -672,6 +672,16 @@ static class ssfx_terrain_offset final : public R_constant_setup
     void setup(CBackend& cmd_list, R_constant* C) override { cmd_list.set_c(C, ps_ssfx_terrain_offset); }
 } ssfx_terrain_offset;
 
+// Управление смешиванием освещения Source Engine (0.0 = оригинал, 1.0 = Source)
+extern float ps_r_source_lighting;
+static class cl_source_lighting final : public R_constant_setup
+{
+    void setup(CBackend& cmd_list, R_constant* C) override
+    {
+        cmd_list.set_c(C, ps_r_source_lighting, 0.f, 0.f, 0.f);
+    }
+} binder_source_lighting;
+
 static class cl_taa_jitter final : public R_constant_setup
 {
     void setup(CBackend& cmd_list, R_constant* C) override
@@ -916,6 +926,9 @@ void CBlender_Compile::SetMapping() const
     r_Constant("ssfx_pom", &ssfx_pom);
     r_Constant("ssfx_terrain_pom", &ssfx_terrain_pom);
     r_Constant("ssfx_terrain_offset", &ssfx_terrain_offset);
+
+    // Source Engine / Black Mesa lighting blend constant
+    r_Constant("source_lighting_control", &binder_source_lighting);
 
     r_Constant("pnv_param_1", &pnv_param_1);
     r_Constant("pnv_param_2", &pnv_param_2);
